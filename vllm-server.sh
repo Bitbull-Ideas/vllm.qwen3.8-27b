@@ -3,7 +3,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VLLM="${SCRIPT_DIR}/.venv/bin/vllm"
+VENV_DIR="${SCRIPT_DIR}/.venv"
+VLLM="${VENV_DIR}/bin/vllm"
+# FlashInfer and torch.compile invoke build tools such as ninja by name.
+export PATH="${VENV_DIR}/bin:${PATH}"
 MODEL_REPO="${MODEL_REPO:-Inferact/Qwen3.8-27B-NVFP4}"
 MODEL_NAME="${MODEL_REPO##*/}"
 MODEL_PATH="${SCRIPT_DIR}/models/${MODEL_NAME}"
