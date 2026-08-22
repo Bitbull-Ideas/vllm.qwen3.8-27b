@@ -4,9 +4,24 @@ A reproducible vLLM deployment for **Qwen3.8-27B** on NVIDIA DGX Spark (GB10, AR
 
 ## Model choice
 
-This setup uses [`Inferact/Qwen3.8-27B-NVFP4`](https://huggingface.co/Inferact/Qwen3.8-27B-NVFP4), pinned to revision `6128240ebaf4eaa7bad2b3d1c72c37d677c5f462`.
+This setup uses [`RadixArk/Qwen3.8-27B-NVFP4`](https://huggingface.co/RadixArk/Qwen3.8-27B-NVFP4), pinned to revision `319f741cce68d7914884900c138a1fbb70a42f30`.
 
-Why this checkpoint:
+This checkpoint replaced the initial `Inferact/Qwen3.8-27B-NVFP4` pin on 2026-08-22 after a controlled
+head-to-head benchmark against two other public NVFP4 quantizations. See
+[`../dgx-spark-incident/qwen3.8_27b_nvfp4_model_comparison_20260822.md`](../dgx-spark-incident/qwen3.8_27b_nvfp4_model_comparison_20260822.md)
+for full measured results and methodology. Summary:
+
+| Model | Short p50 (ms), c1/c2/c4 | Long p50 (ms), c1/c2/c4 | MTP accept rate |
+|---|---|---|---:|
+| Inferact/Qwen3.8-27B-NVFP4 (previous pin) | 3973 / 4456 / 4485 | 17827 / 17144 / 17697 | ~50% |
+| unsloth/Qwen3.8-27B-NVFP4 | 3513 / 3815 / 6803 | 13570 / 14308 / 14754 | ~50% |
+| **RadixArk/Qwen3.8-27B-NVFP4 (current pin)** | **2497 / 4025 / 5939** | **10816 / 12345 / 12780** | **~56%** |
+
+RadixArk was fastest across every scenario in the comparison and had the highest MTP draft-token
+acceptance rate, and was kept installed. All three variants passed functional checks (tool calling,
+long-context recall, correct chat responses) on this hardware.
+
+Why NVFP4 in general:
 
 - NVFP4 is optimized for NVIDIA Blackwell and is the vLLM recipe's low-latency variant.
 - It is smaller than the official FP8 checkpoint, leaving more unified memory for KV cache and other workloads.
@@ -17,7 +32,9 @@ References:
 
 - [vLLM Qwen3.8-27B recipe](https://recipes.vllm.ai/Qwen/Qwen3.8-27B)
 - [Qwen/Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)
-- [Inferact/Qwen3.8-27B-NVFP4](https://huggingface.co/Inferact/Qwen3.8-27B-NVFP4)
+- [RadixArk/Qwen3.8-27B-NVFP4](https://huggingface.co/RadixArk/Qwen3.8-27B-NVFP4) (current pin)
+- [unsloth/Qwen3.8-27B-NVFP4](https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4) (benchmarked alternative)
+- [Inferact/Qwen3.8-27B-NVFP4](https://huggingface.co/Inferact/Qwen3.8-27B-NVFP4) (previous pin, benchmarked baseline)
 
 ## Defaults
 

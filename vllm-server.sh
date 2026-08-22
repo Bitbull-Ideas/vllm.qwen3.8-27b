@@ -7,9 +7,11 @@ VENV_DIR="${SCRIPT_DIR}/.venv"
 VLLM="${VENV_DIR}/bin/vllm"
 # FlashInfer and torch.compile invoke build tools such as ninja by name.
 export PATH="${VENV_DIR}/bin:${PATH}"
-MODEL_REPO="${MODEL_REPO:-Inferact/Qwen3.8-27B-NVFP4}"
+MODEL_REPO="${MODEL_REPO:-RadixArk/Qwen3.8-27B-NVFP4}"
 MODEL_NAME="${MODEL_REPO##*/}"
-MODEL_PATH="${SCRIPT_DIR}/models/${MODEL_NAME}"
+# MODEL_PATH can be overridden explicitly to avoid collisions when different
+# repos share the same trailing path segment (e.g. .../Qwen3.8-27B-NVFP4).
+MODEL_PATH="${MODEL_PATH:-${SCRIPT_DIR}/models/${MODEL_NAME}}"
 SERVED_MODEL_NAME="${SERVED_MODEL_NAME:-Qwen/Qwen3.8-27B}"
 PORT="${PORT:-8000}"
 HOST="${HOST:-0.0.0.0}"

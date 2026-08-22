@@ -4,10 +4,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON="${SCRIPT_DIR}/.venv/bin/python"
-MODEL_REPO="${MODEL_REPO:-Inferact/Qwen3.8-27B-NVFP4}"
-MODEL_REVISION="${MODEL_REVISION:-6128240ebaf4eaa7bad2b3d1c72c37d677c5f462}"
+MODEL_REPO="${MODEL_REPO:-RadixArk/Qwen3.8-27B-NVFP4}"
+MODEL_REVISION="${MODEL_REVISION:-319f741cce68d7914884900c138a1fbb70a42f30}"
 MODEL_NAME="${MODEL_REPO##*/}"
-MODEL_PATH="${SCRIPT_DIR}/models/${MODEL_NAME}"
+# MODEL_PATH can be overridden explicitly to avoid collisions when different
+# repos share the same trailing path segment (e.g. .../Qwen3.8-27B-NVFP4).
+MODEL_PATH="${MODEL_PATH:-${SCRIPT_DIR}/models/${MODEL_NAME}}"
 
 [[ -x "${PYTHON}" ]] || { echo "Run setup_vllm.sh first" >&2; exit 1; }
 mkdir -p "${SCRIPT_DIR}/models"
