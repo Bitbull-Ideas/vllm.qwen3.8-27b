@@ -19,7 +19,7 @@ MAX_MODEL_LEN="${MAX_MODEL_LEN:-262144}"
 GPU_MEM_UTIL="${GPU_MEM_UTIL:-0.50}"
 KV_CACHE_DTYPE="${KV_CACHE_DTYPE:-fp8}"
 NUM_SPEC_TOKENS="${NUM_SPEC_TOKENS:-3}"
-LANGUAGE_ONLY="${LANGUAGE_ONLY:-true}"
+LANGUAGE_ONLY="${LANGUAGE_ONLY:-false}"
 
 [[ -x "${VLLM}" ]] || { echo "Run setup_vllm.sh first" >&2; exit 1; }
 [[ -s "${MODEL_PATH}/config.json" ]] || { echo "Run download_model.sh first" >&2; exit 1; }

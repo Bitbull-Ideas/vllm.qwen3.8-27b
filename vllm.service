@@ -10,13 +10,13 @@ WorkingDirectory=/srv/vllm3
 ExecStart=/srv/vllm3/vllm-server.sh
 Environment=HOST=0.0.0.0
 Environment=PORT=8000
-Environment=MODEL_REPO=Inferact/Qwen3.8-27B-NVFP4
+Environment=MODEL_REPO=RadixArk/Qwen3.8-27B-NVFP4
 Environment=SERVED_MODEL_NAME=Qwen/Qwen3.8-27B
 Environment=MAX_MODEL_LEN=262144
 Environment=GPU_MEM_UTIL=0.50
 Environment=KV_CACHE_DTYPE=fp8
 Environment=NUM_SPEC_TOKENS=3
-Environment=LANGUAGE_ONLY=true
+Environment=LANGUAGE_ONLY=false
 Restart=on-failure
 RestartSec=15
 TimeoutStartSec=infinity

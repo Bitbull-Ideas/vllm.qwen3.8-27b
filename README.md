@@ -53,7 +53,7 @@ References:
 | systemd hard memory limit | `60%` |
 | KV cache | FP8 |
 | MTP speculative tokens | `3` |
-| Vision encoder | disabled by default |
+| Vision encoder | **enabled** (`LANGUAGE_ONLY=false`) |
 
 The systemd `MemoryMax=60%` limit is the hard protection for total service memory on DGX Spark's unified-memory architecture. `GPU_MEM_UTIL=0.50` keeps vLLM's own allocation target below that ceiling.
 
@@ -103,6 +103,27 @@ Thinking is enabled by default. Disable it per request with:
 {"chat_template_kwargs":{"enable_thinking":false}}
 ```
 
+Vision is enabled by default (`LANGUAGE_ONLY=false`). Send images as `image_url` content parts,
+same as OpenAI's vision API:
+
+```bash
+curl http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "Qwen/Qwen3.8-27B",
+    "messages": [{
+      "role": "user",
+      "content": [
+        {"type": "text", "text": "What is in this image?"},
+        {"type": "image_url", "image_url": {"url": "https://example.com/photo.jpg"}}
+      ]
+    }],
+    "max_tokens": 128
+  }'
+```
+
+`image_url.url` also accepts a `data:image/...;base64,...` data URL for local images.
+
 ## Tuning
 
 All launch settings are environment variables. Use a systemd user override rather than editing the unit:
@@ -111,13 +132,13 @@ All launch settings are environment variables. Use a systemd user override rathe
 systemctl --user edit vllm.service
 ```
 
-Example:
+Example (reduce context and disable vision to free memory for a text-only, lower-latency profile):
 
 ```ini
 [Service]
 Environment=MAX_MODEL_LEN=131072
 Environment=NUM_SPEC_TOKENS=0
-Environment=LANGUAGE_ONLY=false
+Environment=LANGUAGE_ONLY=true
 ```
 
 Then reload and restart:
