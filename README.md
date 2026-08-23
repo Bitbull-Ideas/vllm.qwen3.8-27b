@@ -8,8 +8,12 @@ This setup uses [`RadixArk/Qwen3.8-27B-NVFP4`](https://huggingface.co/RadixArk/Q
 
 This checkpoint replaced the initial `Inferact/Qwen3.8-27B-NVFP4` pin on 2026-08-22 after a controlled
 head-to-head benchmark against two other public NVFP4 quantizations. See
-[`../dgx-spark-incident/qwen3.8_27b_nvfp4_model_comparison_20260822.md`](../dgx-spark-incident/qwen3.8_27b_nvfp4_model_comparison_20260822.md)
-for full measured results and methodology. Summary:
+[`benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260822.md`](benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260822.md)
+for the full methodology, raw measured data, and rollback steps, and
+[`benchmarks/qwen3.8_tuning_bench_20260822.md`](benchmarks/qwen3.8_tuning_bench_20260822.md) for the
+prior `NUM_SPEC_TOKENS`/`MAX_MODEL_LEN` tuning pass that established the serving flags used in that
+comparison. The benchmark script itself is [`benchmarks/run_vllm_bench.py`](benchmarks/run_vllm_bench.py).
+Summary:
 
 | Model | Short p50 (ms), c1/c2/c4 | Long p50 (ms), c1/c2/c4 | MTP accept rate |
 |---|---|---|---:|
@@ -134,3 +138,32 @@ systemctl --user daemon-reload
 ```
 
 Restore `/srv/vllm3` from the target's approved backup or remove it only after preserving required evidence and model data.
+
+## Benchmarks
+
+The `benchmarks/` folder contains the measured performance history for this deployment:
+
+- [`benchmarks/qwen3.8_tuning_bench_20260822.md`](benchmarks/qwen3.8_tuning_bench_20260822.md) —
+  serving-flag tuning pass (`NUM_SPEC_TOKENS` 2/3/4, `MAX_MODEL_LEN` 131072/262144) on the original
+  `Inferact/Qwen3.8-27B-NVFP4` checkpoint. Established the current defaults
+  (`NUM_SPEC_TOKENS=3`, `MAX_MODEL_LEN=262144`).
+- [`benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260822.md`](benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260822.md) —
+  head-to-head comparison of three public NVFP4 checkpoints (Inferact, unsloth, RadixArk) using
+  those tuned flags. Documents why `RadixArk/Qwen3.8-27B-NVFP4` replaced the original pin, with full
+  latency/throughput tables, MTP acceptance rates, functional checks, and rollback commands.
+- [`benchmarks/run_vllm_bench.py`](benchmarks/run_vllm_bench.py) — the harness used to produce both
+  reports above. Reusable for any future checkpoint or flag comparison:
+
+```bash
+cd /srv/vllm3   # or wherever this repo is checked out on the serving host
+python3 benchmarks/run_vllm_bench.py --url http://127.0.0.1:8000 --model Qwen/Qwen3.8-27B
+```
+
+It hits `/v1/chat/completions` with a short (64 tokens) and a long (256 tokens) prompt at
+concurrency 1/2/4 (6 requests each, one warmup request per case) and prints p50/p95 latency and
+throughput per scenario. Compare draft-token acceptance across runs via `/metrics`:
+
+```bash
+curl -s http://127.0.0.1:8000/metrics | grep spec_decode_num_
+```
+
