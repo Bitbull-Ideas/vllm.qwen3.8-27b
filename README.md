@@ -7,23 +7,29 @@ A reproducible vLLM deployment for **Qwen3.8-27B** on NVIDIA DGX Spark (GB10, AR
 This setup uses [`RadixArk/Qwen3.8-27B-NVFP4`](https://huggingface.co/RadixArk/Qwen3.8-27B-NVFP4), pinned to revision `319f741cce68d7914884900c138a1fbb70a42f30`.
 
 This checkpoint replaced the initial `Inferact/Qwen3.8-27B-NVFP4` pin on 2026-08-22 after a controlled
-head-to-head benchmark against two other public NVFP4 quantizations. See
+head-to-head benchmark against two other public NVFP4 quantizations, and was re-confirmed against
+three newer candidates in a follow-up round on 2026-09-13. See
 [`benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260822.md`](benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260822.md)
-for the full methodology, raw measured data, and rollback steps, and
+for the original selection methodology and
+[`benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260913.md`](benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260913.md)
+for the follow-up round (against `nvidia/Qwen3.8-27B-NVFP4`, `QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4`,
+and `ukisai/Swift-Qwen3.8-27B-NVFP4`), plus
 [`benchmarks/qwen3.8_tuning_bench_20260822.md`](benchmarks/qwen3.8_tuning_bench_20260822.md) for the
-prior `NUM_SPEC_TOKENS`/`MAX_MODEL_LEN` tuning pass that established the serving flags used in that
-comparison. The benchmark script itself is [`benchmarks/run_vllm_bench.py`](benchmarks/run_vllm_bench.py).
-Summary:
+prior `NUM_SPEC_TOKENS`/`MAX_MODEL_LEN` tuning pass that established the serving flags used in both
+comparisons. The benchmark script itself is [`benchmarks/run_vllm_bench.py`](benchmarks/run_vllm_bench.py).
+Summary (most recent round):
 
 | Model | Short p50 (ms), c1/c2/c4 | Long p50 (ms), c1/c2/c4 | MTP accept rate |
 |---|---|---|---:|
-| Inferact/Qwen3.8-27B-NVFP4 (previous pin) | 3973 / 4456 / 4485 | 17827 / 17144 / 17697 | ~50% |
-| unsloth/Qwen3.8-27B-NVFP4 | 3513 / 3815 / 6803 | 13570 / 14308 / 14754 | ~50% |
-| **RadixArk/Qwen3.8-27B-NVFP4 (current pin)** | **2497 / 4025 / 5939** | **10816 / 12345 / 12780** | **~56%** |
+| **RadixArk/Qwen3.8-27B-NVFP4 (current pin)** | **2822 / 3345 / 5670** | **12102 / 12496 / 13581** | **~51%** |
+| nvidia/Qwen3.8-27B-NVFP4 (official, close 2nd) | 2669 / 4409 / 5753 | 12072 / 13439 / 13561 | ~50% |
+| QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4 | 3806 / 4484 / 6178 | 15333 / 14659 / 15404 | ~49% |
+| ukisai/Swift-Qwen3.8-27B-NVFP4 | 3981 / 5123 / 7130 | 19480 / 18403 / 19009 | ~49% |
 
-RadixArk was fastest across every scenario in the comparison and had the highest MTP draft-token
-acceptance rate, and was kept installed. All three variants passed functional checks (tool calling,
-long-context recall, correct chat responses) on this hardware.
+RadixArk was fastest or tied-fastest in 4 of 6 scenarios and kept the highest MTP acceptance rate
+across both comparison rounds, and remains the pin. All four candidates in the latest round passed
+functional checks (correctness, tool calling) on this hardware; the original round also verified
+long-context recall.
 
 Why NVFP4 in general:
 
@@ -37,6 +43,9 @@ References:
 - [vLLM Qwen3.8-27B recipe](https://recipes.vllm.ai/Qwen/Qwen3.8-27B)
 - [Qwen/Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)
 - [RadixArk/Qwen3.8-27B-NVFP4](https://huggingface.co/RadixArk/Qwen3.8-27B-NVFP4) (current pin)
+- [nvidia/Qwen3.8-27B-NVFP4](https://huggingface.co/nvidia/Qwen3.8-27B-NVFP4) (benchmarked alternative, official NVIDIA release)
+- [QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4](https://huggingface.co/QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4) (benchmarked alternative, quantization-aware training)
+- [ukisai/Swift-Qwen3.8-27B-NVFP4](https://huggingface.co/ukisai/Swift-Qwen3.8-27B-NVFP4) (benchmarked alternative)
 - [unsloth/Qwen3.8-27B-NVFP4](https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4) (benchmarked alternative)
 - [Inferact/Qwen3.8-27B-NVFP4](https://huggingface.co/Inferact/Qwen3.8-27B-NVFP4) (previous pin, benchmarked baseline)
 
@@ -172,6 +181,12 @@ The `benchmarks/` folder contains the measured performance history for this depl
   head-to-head comparison of three public NVFP4 checkpoints (Inferact, unsloth, RadixArk) using
   those tuned flags. Documents why `RadixArk/Qwen3.8-27B-NVFP4` replaced the original pin, with full
   latency/throughput tables, MTP acceptance rates, functional checks, and rollback commands.
+- [`benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260913.md`](benchmarks/qwen3.8_27b_nvfp4_model_comparison_20260913.md) —
+  follow-up round checking whether newer NVFP4 builds released since August beat the RadixArk pin.
+  Benchmarks the official `nvidia/Qwen3.8-27B-NVFP4`, `QUASAR-QAT/Qwen3.8-27B-QUASAR-NVFP4`, and
+  `ukisai/Swift-Qwen3.8-27B-NVFP4` against a freshly re-tested RadixArk baseline. Result: no change,
+  RadixArk remains fastest/highest-MTP-acceptance; nvidia's official build is a close second and a
+  reasonable fallback candidate.
 - [`benchmarks/run_vllm_bench.py`](benchmarks/run_vllm_bench.py) — the harness used to produce both
   reports above. Reusable for any future checkpoint or flag comparison:
 
